@@ -1,15 +1,12 @@
 package inertia
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"reflect"
 	"sync"
 
@@ -114,8 +111,6 @@ func NewInertiaWithConfig(config InertiaConfig) (i *Inertia) {
 	i.config.Echo.HTTPErrorHandler = i.config.HTTPErrorHandler
 	log.Printf("[Inertia] Loading templates out of %s", i.config.TemplatesPath)
 	i.templates = template.Must(template.New("").Funcs(i.config.TemplateFuncMap).ParseGlob(i.config.TemplatesPath))
-	// Try to set a version off of the manifest, if any
-	i.SetViteVersion()
 	// Register a unique id generator to identify requests
 	i.config.Echo.Use(middleware.RequestIDWithConfig(i.config.RequestIDConfig))
 
@@ -206,22 +201,6 @@ func (i *Inertia) Version(version func() string) {
 // Set a version string
 func (i *Inertia) SetVersion(version string) {
 	i.version = version
-}
-
-// Create a version hash off of the manifest.json file md5
-func (i *Inertia) SetViteVersion(viteManifestPath ...string) bool {
-	filePath := i.config.PublicPath + "/manifest.json"
-	if len(viteManifestPath) > 0 {
-		filePath = viteManifestPath[0]
-	}
-	fileData, err := os.ReadFile(filePath)
-	if err == nil {
-		hash := md5.New()
-		hash.Write(fileData)
-		i.version = hex.EncodeToString(hash.Sum(nil))
-		return true
-	}
-	return false
 }
 
 //
