@@ -75,15 +75,15 @@ func NewDefaultInertiaConfig(e *echo.Echo) (i InertiaConfig) {
 
 	// Register convenient template functions
 	i.TemplateFuncMap = template.FuncMap{
-		"inertia":         utils.Inertia,
-		"json_encode":     utils.JsonEncode,
-		"json_encode_raw": utils.JsonEncodeRaw,
-		"vite":             utils.Vite,
-		"routes": func() template.JS {
+		"inertia"         : utils.Inertia,
+		"json_encode"     : utils.JsonEncode,
+		"json_encode_raw" : utils.JsonEncodeRaw,
+		"vite"            : utils.Vite,
+		"routes"          : func() template.JS {
 			retVal, _ := json.Marshal(e.Routes())
 			return template.JS(string(retVal))
 		},
-		"routes_ziggy": func(v interface{}) template.HTML {
+		"routes_ziggy"    : func(v interface{}) template.HTML {
 			ziggy := utils.NewZiggy(e, v.(map[string]interface{}))
 			retVal, _ := json.Marshal(ziggy)
 			return template.HTML(fmt.Sprintf("<script>const Ziggy = %s;</script>", string(retVal)))
