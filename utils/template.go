@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"os"
-	"strings"
 )
 
 // Inertia converts a Go value to an Inertia template HTML string.
@@ -43,11 +41,6 @@ func JsonEncodeRaw(v interface{}) string {
 
 // Vite resolves the asset path using the manifest file and returns it as template HTML.
 func Vite(path string, manifestPath ...string) template.HTML {
-	// Ensure the path starts with "/"
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-
 	// Determine the manifest path
 	mPath := GetEnvOrDefault("INERTIA_PUBLIC_PATH", "public") + "/manifest.json"
 	if len(manifestPath) > 0 {
@@ -62,19 +55,29 @@ func Vite(path string, manifestPath ...string) template.HTML {
 	}
 	defer manifestFile.Close()
 
-	manifestData, err := io.ReadAll(manifestFile)
-	if err != nil {
-		// Handle error appropriately, e.g., log or return the original path
-		return template.HTML(path)
-	}
-
 	// Unmarshal the manifest data
-	var manifest map[string]string
-	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+	var manifest map[string]map[string]interface{}
+	decoder := json.NewDecoder(manifestFile)
+	if err := decoder.Decode(&manifest); err != nil {
 		// Handle error appropriately, e.g., log or return the original path
 		return template.HTML(path)
 	}
 
-	// Return the resolved path from the manifest
-	return template.HTML(manifest[path])
+	// Find the entry in the manifest and get the resolved path
+	if entry, exists := manifest[path]; exists {
+		if file, ok := entry["file"].(string); ok {
+			// Check if environment is set to "dev"
+			if os.Getenv("ENV") == "local" {
+				// Include development mode script tags
+				return template.HTML(fmt.Sprintf(
+					`<script type="module" src="http://localhost:5173/@vite/client"></script>
+					 <script type="module" src="http://localhost:5173/%s"></script>`, path))
+			}
+			// Return the resolved path from the manifest
+			return template.HTML(fmt.Sprintf(`<script type="module" src="/%s"></script>`, file))
+		}
+	}
+
+	// Return the original path if not found in the manifest
+	return template.HTML(fmt.Sprintf(`<script type="module" src="/%s"></script>`, path))
 }
