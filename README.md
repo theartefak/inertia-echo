@@ -29,7 +29,7 @@ func hello(c echo.Context) error {
 
 The internal template renderer of Inertia-Echo checks whether a fresh full base-site has to be returned or only the reduced Inertia response.
 
-> For more examples refer to the `demo` branch at https://github.com/elipZis/inertia-echo/tree/demo
+> For more examples refer to the `demo` branch at https://github.com/theartefak/demo-inertia-echo
 
 ## License
 
